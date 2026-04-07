@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useLanguageStore } from '../../store/useLanguageStore';
 import type { Car } from '../../types';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export function CarListing() {
   const { cars, addOrder } = useAppStore();
   const { user } = useAuthStore();
+  const { t } = useLanguageStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [isOrdering, setIsOrdering] = useState(false);
@@ -54,8 +56,8 @@ export function CarListing() {
     <div className="w-full">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Discover Vehicles</h1>
-          <p className="text-gray-500 mt-2">Browse our exclusive collection of premium cars.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">{t('discover')}</h1>
+          <p className="text-gray-500 mt-2">{t('browse')}</p>
         </div>
         
         <div className="flex gap-3 w-full md:w-auto">
@@ -65,14 +67,14 @@ export function CarListing() {
             </div>
             <input
               type="text"
-              placeholder="Search by brand or model..."
+              placeholder={t('searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="block w-full pl-10 px-4 py-2.5 bg-white border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all-smooth shadow-sm"
             />
           </div>
           <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-border rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-            <SlidersHorizontal size={18} /> Filters
+            <SlidersHorizontal size={18} /> {t('filters')}
           </button>
         </div>
       </div>
@@ -100,7 +102,7 @@ export function CarListing() {
         </div>
       ) : filteredCars.length === 0 ? (
         <div className="text-center py-20 bg-white border border-border rounded-2xl shadow-sm">
-          <p className="text-gray-500 text-lg">No vehicles found matching your criteria.</p>
+          <p className="text-gray-500 text-lg">{t('noVehicles')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -109,7 +111,7 @@ export function CarListing() {
               key={car.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl border border-border overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all-smooth group flex flex-col"
+              className="bg-white rounded-2xl border border-border overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all-smooth group flex flex-col cubed-card"
             >
               <div className="relative aspect-[4/3] overflow-hidden">
                 <img 
@@ -133,9 +135,9 @@ export function CarListing() {
                   </div>
                   <button 
                     onClick={() => handleBuyClick(car)}
-                    className="p-2.5 bg-primary text-white rounded-xl hover:bg-gray-800 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-primary/20"
+                    className="flex justify-center items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl hover:opacity-90 transition-opacity text-xs font-semibold"
                   >
-                    <ChevronRight size={20} />
+                    {t('buyNow')} <ChevronRight size={16} />
                   </button>
                 </div>
               </div>
@@ -175,11 +177,11 @@ export function CarListing() {
                 
                 <div className="grid grid-cols-2 gap-4 mb-8">
                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                      <div className="text-xs text-gray-500 uppercase font-semibold mb-1">Mileage</div>
+                      <div className="text-xs text-gray-500 uppercase font-semibold mb-1">{t('mileage')}</div>
                       <div className="font-medium text-gray-900">{selectedCar.mileage.toLocaleString()} mi</div>
                    </div>
                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                      <div className="text-xs text-gray-500 uppercase font-semibold mb-1">Condition</div>
+                      <div className="text-xs text-gray-500 uppercase font-semibold mb-1">{t('condition')}</div>
                       <div className="font-medium text-gray-900">{selectedCar.condition}</div>
                    </div>
                 </div>
@@ -190,18 +192,18 @@ export function CarListing() {
                     disabled={isOrdering}
                     className="flex-1 py-3 px-4 rounded-xl text-sm font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >
-                    Cancel
+                    {t('cancel')}
                   </button>
                   <button 
                     onClick={handleConfirmOrder}
                     disabled={isOrdering}
-                    className="flex-1 flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-primary hover:bg-gray-800 transition-colors shadow-sm disabled:opacity-50"
+                    className="flex-1 flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-primary hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50"
                   >
                     {isOrdering ? (
                       <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
-                        <CheckCircle2 size={18} /> Confirm Order
+                        <CheckCircle2 size={18} /> {t('confirmOrder')}
                       </>
                     )}
                   </button>

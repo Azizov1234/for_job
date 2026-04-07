@@ -17,20 +17,37 @@ export function Login() {
       toast.error('Please enter both email and password.');
       return;
     }
-    
+
     setIsLoading(true);
-    // Simulate API call
+
+    // Mock API Check
     setTimeout(() => {
-      login({
-        id: 'u1',
-        name: email === 'admin@drive.net' ? 'Admin User' : 'Test User',
-        email,
-        role: email === 'admin@drive.net' ? 'admin' : 'user',
-        avatar: `https://ui-avatars.com/api/?name=${email}&background=111827&color=fff`,
-      });
       setIsLoading(false);
-      toast.success('Logged in successfully!');
-      navigate('/');
+      
+      if (email === 'admin@example.com' && password === 'SuperAdmin123!') {
+        login({
+          id: 'admin_1',
+          name: 'Super Admin',
+          email,
+          role: 'admin',
+          avatar: `https://ui-avatars.com/api/?name=Super+Admin&background=6366f1&color=fff`,
+        });
+        toast.success('Logged in successfully! Welcome back.');
+        navigate('/');
+      } else if (email.includes('@') && password.length >= 6) {
+         // Fallback user login for generic mock
+         login({
+          id: Math.random().toString(36).substr(2, 9),
+          name: 'Test User',
+          email,
+          role: 'user',
+          avatar: `https://ui-avatars.com/api/?name=${email}&background=6366f1&color=fff`,
+        });
+        toast.success('User session started! Welcome.');
+        navigate('/');
+      } else {
+         toast.error('Invalid credentials. Please try again.');
+      }
     }, 1200);
   };
 
