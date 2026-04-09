@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User as UserIcon, Car, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import toast from 'react-hot-toast';
+import { motion } from 'framer-motion';
 
 export function Register() {
   const [name, setName] = useState('');
@@ -36,7 +37,12 @@ export function Register() {
   };
 
   return (
-    <div className="w-full max-w-md bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border p-8 pb-10">
+    <motion.div 
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="w-full max-w-md glass-card p-8 pb-10"
+    >
       <div className="flex flex-col items-center mb-8">
         <div className="bg-primary text-primary-foreground p-3 rounded-xl mb-4 shadow-md">
           <Car size={28} />
@@ -56,7 +62,7 @@ export function Register() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="block w-full pl-10 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all-smooth"
+              className="block w-full pl-10 px-3 py-2.5 bg-white/50 border border-gray-200 rounded-xl text-sm focus:bg-white input-glow transition-all-smooth"
               placeholder="John Doe"
             />
           </div>
@@ -72,7 +78,7 @@ export function Register() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="block w-full pl-10 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all-smooth"
+              className="block w-full pl-10 px-3 py-2.5 bg-white/50 border border-gray-200 rounded-xl text-sm focus:bg-white input-glow transition-all-smooth"
               placeholder="name@example.com"
             />
           </div>
@@ -88,7 +94,7 @@ export function Register() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="block w-full pl-10 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all-smooth"
+              className="block w-full pl-10 px-3 py-2.5 bg-white/50 border border-gray-200 rounded-xl text-sm focus:bg-white input-glow transition-all-smooth"
               placeholder="••••••••"
             />
           </div>
@@ -97,7 +103,7 @@ export function Register() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full flex justify-center items-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-primary hover:bg-gray-800 disabled:bg-gray-400 focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all-smooth shadow-sm"
+          className="w-full flex justify-center items-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-primary disabled:bg-gray-400 btn-hover-scale shadow-sm"
         >
           {isLoading ? (
              <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -115,6 +121,6 @@ export function Register() {
           Sign In
         </Link>
       </p>
-    </div>
+    </motion.div>
   );
 }

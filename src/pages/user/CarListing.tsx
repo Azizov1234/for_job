@@ -1,214 +1,312 @@
 import { useState, useEffect } from 'react';
-import { Search, SlidersHorizontal, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import { useAuthStore } from '../../store/useAuthStore';
 import { useLanguageStore } from '../../store/useLanguageStore';
 import type { Car } from '../../types';
-import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { OrderForm } from '../../components/OrderForm';
+import { CarCard } from '../../components/CarCard';
+import { HeroCarousel } from '../../components/HeroCarousel';
+
+const CATEGORIES = ['All', 'SUV', 'Sedan', 'Sports', 'Coupe', 'Wagon'];
+const CONDITIONS  = ['All', 'New', 'Used'];
+const BRANDS = ['All', 'Tesla', 'Porsche', 'Audi', 'BMW', 'Mercedes', 'Ferrari', 'Lamborghini', 'Ford', 'Toyota', 'Lexus', 'Chevrolet', 'Land Rover', 'Aston Martin'];
 
 export function CarListing() {
-  const { cars, addOrder } = useAppStore();
-  const { user } = useAuthStore();
+  const { cars } = useAppStore();
   const { t } = useLanguageStore();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCar, setSelectedCar] = useState<Car | null>(null);
-  const [isOrdering, setIsOrdering] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Simulate data fetching
+  const [selectedCar, setSelectedCar]       = useState<Car | null>(null);
+  const [modalView, setModalView]           = useState<'detail' | 'order'>('detail');
+  const [isLoading, setIsLoading]           = useState(true);
+  const [showFilters, setShowFilters]       = useState(false);
+
+  // Filter state
+  const [search, setSearch]         = useState('');
+  const [category, setCategory]     = useState('All');
+  const [condition, setCondition]   = useState('All');
+  const [brand, setBrand]           = useState('All');
+  const [maxPrice, setMaxPrice]     = useState(300000);
+
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setIsLoading(false), 700);
+    return () => clearTimeout(t);
   }, []);
-  
-  const filteredCars = cars.filter(car => 
-    car.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    car.brand.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
-  const handleBuyClick = (car: Car) => {
-    setSelectedCar(car);
-  };
+  const filtered = cars.filter(car => {
+    const q = search.toLowerCase();
+    const matchSearch = !q || car.title.toLowerCase().includes(q) || car.brand.toLowerCase().includes(q);
+    const matchCat  = category  === 'All' || car.category  === category;
+    const matchCond = condition === 'All' || car.condition === condition;
+    const matchBrand= brand     === 'All' || car.brand     === brand;
+    const matchPrice= car.price <= maxPrice;
+    return matchSearch && matchCat && matchCond && matchBrand && matchPrice;
+  });
 
-  const handleConfirmOrder = () => {
-    if (!user) return;
-    setIsOrdering(true);
-    
-    setTimeout(() => {
-      addOrder({
-        id: Math.random().toString(36).substr(2, 9),
-        userId: user.id,
-        userName: user.name,
-        carId: selectedCar!.id,
-        carTitle: selectedCar!.title,
-        price: selectedCar!.price,
-        status: 'PENDING',
-        date: new Date().toISOString().split('T')[0]
-      });
-      setIsOrdering(false);
-      setSelectedCar(null);
-      toast.success('Order placed successfully! We will contact you soon.');
-    }, 1500);
-  };
+  const activeFiltersCount = [
+    category !== 'All', condition !== 'All', brand !== 'All', maxPrice < 300000
+  ].filter(Boolean).length;
+
+  const handleBuyClick = (car: Car) => { setSelectedCar(car); setModalView('detail'); };
+  const clearFilters = () => { setCategory('All'); setCondition('All'); setBrand('All'); setMaxPrice(300000); };
 
   return (
     <div className="w-full">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">{t('discover')}</h1>
-          <p className="text-gray-500 mt-2">{t('browse')}</p>
-        </div>
-        
-        <div className="flex gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-80">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={18} className="text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder={t('searchPlaceholder')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 px-4 py-2.5 bg-white border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all-smooth shadow-sm"
-            />
-          </div>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-border rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-            <SlidersHorizontal size={18} /> {t('filters')}
+      {/* Hero Carousel */}
+      {!isLoading && <HeroCarousel cars={cars} onBuy={handleBuyClick} />}
+
+      {/* Category chips */}
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
+        {CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setCategory(cat)}
+            className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+              category === cat
+                ? 'bg-primary text-white shadow-md shadow-primary/30'
+                : 'bg-white dark:bg-white/10 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:border-primary hover:text-primary'
+            }`}
+          >
+            {cat}
           </button>
-        </div>
+        ))}
       </div>
 
+      {/* Search + Filters Row */}
+      <div className="flex gap-3 items-center mb-8">
+        <div className="relative flex-1">
+          <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder={t('searchPlaceholder')}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none input-glow transition-all-smooth shadow-sm"
+          />
+          {search && (
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X size={16} />
+            </button>
+          )}
+        </div>
+        <button
+          onClick={() => setShowFilters(v => !v)}
+          className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all shadow-sm ${
+            showFilters || activeFiltersCount > 0
+              ? 'bg-primary text-white border-primary shadow-primary/30'
+              : 'bg-white dark:bg-white/10 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:border-primary hover:text-primary'
+          }`}
+        >
+          <SlidersHorizontal size={17} /> Filters
+          {activeFiltersCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-accent text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              {activeFiltersCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Expanded filters panel */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden mb-8"
+          >
+            <div className="glass-card p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {/* Brand */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Brand</label>
+                <select
+                  value={brand}
+                  onChange={e => setBrand(e.target.value)}
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none input-glow"
+                >
+                  {BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+              {/* Condition */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Condition</label>
+                <div className="flex gap-2">
+                  {CONDITIONS.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => setCondition(c)}
+                      className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-all ${
+                        condition === c
+                          ? 'bg-primary text-white border-primary'
+                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:border-primary'
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Max Price */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                  Max Price: <span className="text-primary">${maxPrice.toLocaleString()}</span>
+                </label>
+                <input
+                  type="range"
+                  min={10000} max={300000} step={5000}
+                  value={maxPrice}
+                  onChange={e => setMaxPrice(Number(e.target.value))}
+                  className="w-full accent-primary"
+                />
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>$10k</span><span>$300k</span>
+                </div>
+              </div>
+              {/* Clear */}
+              <div className="flex items-end">
+                <button
+                  onClick={clearFilters}
+                  className="w-full py-2 rounded-xl text-sm font-semibold text-red-500 border border-red-200 dark:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Results header */}
+      <div className="flex justify-between items-center mb-5">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          {isLoading ? 'Loading...' : `${filtered.length} Vehicle${filtered.length !== 1 ? 's' : ''} Found`}
+        </h2>
+      </div>
+
+      {/* Car Grid */}
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
-            <div key={n} className="bg-white rounded-2xl border border-border overflow-hidden flex flex-col animate-pulse">
-              <div className="aspect-[4/3] bg-gray-200 w-full" />
-              <div className="p-5 flex flex-col flex-1">
-                <div className="h-3 bg-gray-200 rounded w-16 mb-2" />
-                <div className="h-5 bg-gray-200 rounded w-full mb-3" />
-                <div className="h-4 bg-gray-200 rounded w-full mb-1" />
-                <div className="h-4 bg-gray-200 rounded w-2/3 mb-4" />
-                <div className="flex justify-between items-end mt-auto pt-4 border-t border-gray-100">
-                  <div className="space-y-1">
-                    <div className="h-3 bg-gray-200 rounded w-10" />
-                    <div className="h-6 bg-gray-200 rounded w-20" />
-                  </div>
-                  <div className="h-10 w-10 bg-gray-200 rounded-xl" />
+          {Array.from({ length: 8 }).map((_, n) => (
+            <div key={n} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-white/10 overflow-hidden flex flex-col animate-pulse">
+              <div className="aspect-[4/3] bg-gray-200 dark:bg-gray-700 w-full" />
+              <div className="p-5 space-y-3">
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16" />
+                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-full" />
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
+                <div className="flex justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-20" />
+                  <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded-xl" />
                 </div>
               </div>
             </div>
           ))}
         </div>
-      ) : filteredCars.length === 0 ? (
-        <div className="text-center py-20 bg-white border border-border rounded-2xl shadow-sm">
-          <p className="text-gray-500 text-lg">{t('noVehicles')}</p>
-        </div>
+      ) : filtered.length === 0 ? (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-24">
+          <div className="text-6xl mb-4">🚗</div>
+          <p className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('noVehicles')}</p>
+          <p className="text-gray-400 text-sm">Try adjusting your search or filters.</p>
+          <button onClick={clearFilters} className="mt-4 text-primary font-semibold text-sm hover:underline">Reset all filters</button>
+        </motion.div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredCars.map((car) => (
-            <motion.div 
-              key={car.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl border border-border overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all-smooth group flex flex-col cubed-card"
-            >
-              <div className="relative aspect-[4/3] overflow-hidden">
-                <img 
-                  src={car.image} 
-                  alt={car.title} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                />
-                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-xs font-semibold px-2.5 py-1 rounded-md text-gray-900 shadow-sm">
-                  {car.condition}
-                </div>
-              </div>
-              <div className="p-5 flex flex-col flex-1">
-                <div className="text-xs font-semibold text-accent mb-1 uppercase tracking-wider">{car.brand}</div>
-                <h3 className="text-lg font-bold text-gray-900 mb-1 truncate">{car.title}</h3>
-                <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1">{car.description}</p>
-                
-                <div className="flex justify-between items-end mt-auto pt-4 border-t border-gray-100">
-                  <div>
-                    <div className="text-xs text-gray-400 mb-0.5">Price</div>
-                    <div className="text-xl font-bold text-gray-900">${car.price.toLocaleString()}</div>
-                  </div>
-                  <button 
-                    onClick={() => handleBuyClick(car)}
-                    className="flex justify-center items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl hover:opacity-90 transition-opacity text-xs font-semibold"
-                  >
-                    {t('buyNow')} <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
+          {filtered.map((car, index) => (
+            <CarCard key={car.id} car={car} onBuy={handleBuyClick} index={index} />
           ))}
         </div>
       )}
 
+      {/* Car Detail / Order Modal */}
       <AnimatePresence>
         {selectedCar && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col"
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 modal-backdrop">
+            <motion.div
+              initial={{ opacity: 0, y: 80, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 80, scale: 0.95 }}
+              transition={{ type: 'spring', damping: 26, stiffness: 220 }}
+              className="glass-card w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
             >
-              <div className="relative h-64 overflow-hidden">
-                <img src={selectedCar.image} alt={selectedCar.title} className="w-full h-full object-cover" />
-                <button 
+              {/* Image header */}
+              <div className="relative h-64 overflow-hidden shrink-0">
+                <motion.img
+                  initial={{ scale: 1.08, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  src={selectedCar.image} alt={selectedCar.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                <button
                   onClick={() => setSelectedCar(null)}
-                  className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors backdrop-blur-md"
+                  className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors backdrop-blur-md z-10"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  <X size={18} />
                 </button>
               </div>
-              <div className="p-6 md:p-8">
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">{selectedCar.title}</h2>
-                    <p className="text-gray-500">{selectedCar.brand} • {selectedCar.year}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-gray-900">${selectedCar.price.toLocaleString()}</div>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                   <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                      <div className="text-xs text-gray-500 uppercase font-semibold mb-1">{t('mileage')}</div>
-                      <div className="font-medium text-gray-900">{selectedCar.mileage.toLocaleString()} mi</div>
-                   </div>
-                   <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                      <div className="text-xs text-gray-500 uppercase font-semibold mb-1">{t('condition')}</div>
-                      <div className="font-medium text-gray-900">{selectedCar.condition}</div>
-                   </div>
-                </div>
 
-                <div className="flex gap-4">
-                  <button 
-                    onClick={() => setSelectedCar(null)}
-                    disabled={isOrdering}
-                    className="flex-1 py-3 px-4 rounded-xl text-sm font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              {/* Detail view */}
+              <AnimatePresence mode="wait">
+                {modalView === 'detail' ? (
+                  <motion.div
+                    key="detail"
+                    initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                    className="p-6 md:p-8 flex flex-col flex-1 overflow-y-auto"
                   >
-                    {t('cancel')}
-                  </button>
-                  <button 
-                    onClick={handleConfirmOrder}
-                    disabled={isOrdering}
-                    className="flex-1 flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-primary hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50"
+                    <div className="flex justify-between items-start mb-5">
+                      <div>
+                        <div className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">{selectedCar.brand}</div>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{selectedCar.title}</h2>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">{selectedCar.year} · {selectedCar.condition}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-primary">${selectedCar.price.toLocaleString()}</div>
+                        {selectedCar.discount && (
+                          <div className="text-xs text-emerald-500 font-semibold">{selectedCar.discount}% OFF Applied</div>
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">{selectedCar.description}</p>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                      {[
+                        { label: 'Mileage',      value: `${selectedCar.mileage.toLocaleString()} mi` },
+                        { label: 'Condition',    value: selectedCar.condition },
+                        { label: 'Engine',       value: selectedCar.engine       || 'N/A' },
+                        { label: 'Transmission', value: selectedCar.transmission || 'N/A' },
+                      ].map(s => (
+                        <div key={s.label} className="bg-white/50 dark:bg-white/5 p-3 rounded-xl border border-white/40 dark:border-white/10">
+                          <div className="text-[10px] text-gray-400 uppercase font-semibold mb-1">{s.label}</div>
+                          <div className="text-sm font-semibold text-gray-900 dark:text-white">{s.value}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex gap-3 mt-auto">
+                      <button
+                        onClick={() => setSelectedCar(null)}
+                        className="flex-1 py-3 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 bg-white/70 dark:bg-white/10 border border-white/50 dark:border-white/10 btn-hover-scale"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => setModalView('order')}
+                        className="flex-1 py-3 rounded-xl text-sm font-semibold text-white bg-primary btn-hover-scale shadow-lg shadow-primary/30"
+                      >
+                        {t('buyNow')} →
+                      </button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="order"
+                    initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+                    className="flex-1 overflow-hidden"
                   >
-                    {isOrdering ? (
-                      <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <CheckCircle2 size={18} /> {t('confirmOrder')}
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
+                    <OrderForm car={selectedCar} onClose={() => setSelectedCar(null)} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           </div>
         )}

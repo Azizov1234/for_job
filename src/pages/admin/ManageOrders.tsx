@@ -1,15 +1,18 @@
 import { useAppStore } from '../../store/useAppStore';
+import { useLanguageStore } from '../../store/useLanguageStore';
 import type { Order } from '../../types';
 import toast from 'react-hot-toast';
+import { motion } from 'framer-motion';
 
 const statuses: Order['status'][] = ['PENDING', 'CONFIRMED', 'DELIVERED'];
 
 export function ManageOrders() {
   const { orders, updateOrderStatus } = useAppStore();
+  const { t } = useLanguageStore();
 
   const handleStatusChange = (id: string, status: Order['status']) => {
     updateOrderStatus(id, status);
-    toast.success(`Order status updated to ${status}`);
+    toast.success(`${t('status')} ${t('orderStatusUpdated') || 'updated to'} ${t(status.toLowerCase())}`);
   };
 
   const statusColors = {
@@ -21,26 +24,37 @@ export function ManageOrders() {
   return (
     <div className="max-w-7xl mx-auto w-full">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Orders</h1>
-        <p className="text-gray-500 mt-1">Manage customer purchases.</p>
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{t('orders') || 'Orders'}</h1>
+        <p className="text-gray-500 mt-1">{t('manageOrdersDesc') || 'Manage customer purchases.'}</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-600">
-            <thead className="text-xs uppercase bg-gray-50 text-gray-500 font-semibold border-b border-border">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="glass-card overflow-hidden"
+      >
+        <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+          <table className="w-full text-left text-sm text-gray-600 border-collapse">
+            <thead className="sticky top-0 z-10 text-xs uppercase bg-gray-50/95 backdrop-blur-sm text-gray-500 font-semibold border-b border-border">
               <tr>
-                <th className="px-6 py-4">Order ID</th>
-                <th className="px-6 py-4">Customer</th>
-                <th className="px-6 py-4">Vehicle</th>
-                <th className="px-6 py-4">Date</th>
-                <th className="px-6 py-4">Amount</th>
-                <th className="px-6 py-4 text-right">Status</th>
+                <th className="px-6 py-4">{t('orderId')}</th>
+                <th className="px-6 py-4">{t('customer')}</th>
+                <th className="px-6 py-4">{t('vehicle')}</th>
+                <th className="px-6 py-4">{t('date')}</th>
+                <th className="px-6 py-4">{t('amount')}</th>
+                <th className="px-6 py-4 text-right">{t('status')}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
-              {orders.map(order => (
-                <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+            <tbody className="divide-y divide-gray-100">
+              {orders.map((order, idx) => (
+                <motion.tr 
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  key={order.id} 
+                  className="hover:bg-white/40 transition-colors"
+                >
                   <td className="px-6 py-4 font-mono text-xs text-gray-500">#{order.id.toUpperCase()}</td>
                   <td className="px-6 py-4 font-medium text-gray-900">{order.userName}</td>
                   <td className="px-6 py-4">{order.carTitle}</td>
@@ -50,14 +64,14 @@ export function ManageOrders() {
                     <select
                       value={order.status}
                       onChange={(e) => handleStatusChange(order.id, e.target.value as Order['status'])}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg border-0 cursor-pointer focus:ring-2 focus:ring-primary/20 outline-none appearance-none ${statusColors[order.status]}`}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/40 shadow-sm cursor-pointer focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-all-smooth ${statusColors[order.status]}`}
                     >
                       {statuses.map(s => (
-                        <option key={s} value={s}>{s}</option>
+                        <option key={s} value={s} className="bg-white text-gray-900">{t(s.toLowerCase())}</option>
                       ))}
                     </select>
                   </td>
-                </tr>
+                </motion.tr>
               ))}
             </tbody>
           </table>
@@ -67,7 +81,7 @@ export function ManageOrders() {
            </div>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
