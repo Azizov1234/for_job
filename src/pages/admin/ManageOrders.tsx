@@ -4,7 +4,7 @@ import type { Order } from '../../types';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
-const statuses: Order['status'][] = ['PENDING', 'CONFIRMED', 'DELIVERED'];
+const statuses: Order['status'][] = ['PENDING', 'CONFIRMED', 'DELIVERED', 'CANCELLED'];
 
 export function ManageOrders() {
   const { orders, updateOrderStatus } = useAppStore();
@@ -15,10 +15,11 @@ export function ManageOrders() {
     toast.success(`${t('status')} ${t('orderStatusUpdated') || 'updated to'} ${t(status.toLowerCase())}`);
   };
 
-  const statusColors = {
-    PENDING: 'bg-yellow-100 text-yellow-700',
-    CONFIRMED: 'bg-blue-100 text-blue-700',
-    DELIVERED: 'bg-green-100 text-green-700',
+  const statusColors: Record<Order['status'], string> = {
+    PENDING: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    CONFIRMED: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    DELIVERED: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    CANCELLED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   };
 
   return (
